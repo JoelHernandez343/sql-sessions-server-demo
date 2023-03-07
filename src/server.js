@@ -1,12 +1,16 @@
 import express from "express";
+import session from "express-session";
 import fs from "fs/promises";
 import https from "https";
 import path from "path";
 import * as url from "url";
-const __filename = url.fileURLToPath(import.meta.url);
+// const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
-import { authUser } from "./userAuth.js";
+// import { authDb } from "./userAuth.js";
+import { router as sessionRouter } from "./routes/session.js";
+import { router as adminRouter } from "./routes/admin.js";
+import { router as userRouter } from "./routes/user.js";
 
 // HTTPS information
 const key = await fs.readFile("./key.pem");
@@ -19,26 +23,24 @@ const server = https.createServer({ key, cert }, app);
 // app config
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(
+  session({
+    secret: "this-is-a-long-long-secret-string",
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24,
+      secure: true,
+    },
+    resave: false,
+    saveUninitialized: false,
+  })
+);
 
 const frontend = path.join(__dirname, "../../sql-sessions-frontend");
 
 // routes
-app.get("/", (req, res) => {
-  res.sendFile(path.join(frontend, "login.html"));
-});
-
-app.post("/login", async (req, res) => {
-  const { body } = req;
-
-  const auth = await authUser(body.userName, body.password);
-
-  if (auth) {
-    console.log(auth);
-    res.send("ok");
-  } else {
-    res.status(403).sendFile(path.join(frontend, "error.html"));
-  }
-});
+app.use("/", sessionRouter);
+app.use("/", adminRouter);
+app.use("/", userRouter);
 
 // default routes
 app.use((req, res, next) => {
