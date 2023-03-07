@@ -42,6 +42,10 @@ app.use("/", sessionRouter);
 app.use("/", adminRouter);
 app.use("/", userRouter);
 
+app.get("/scripts/landing.js", (req, res) => {
+  res.sendFile(path.join(frontend, "landing.js"));
+});
+
 // default routes
 app.use((req, res, next) => {
   res.status(404);
