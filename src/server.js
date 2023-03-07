@@ -30,7 +30,10 @@ app.get("/", (req, res) => {
 app.post("/login", async (req, res) => {
   const { body } = req;
 
-  if (await authUser(body.userName, body.password)) {
+  const auth = await authUser(body.userName, body.password);
+
+  if (auth) {
+    console.log(auth);
     res.send("ok");
   } else {
     res.status(403).sendFile(path.join(frontend, "error.html"));
